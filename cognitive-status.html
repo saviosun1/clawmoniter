@@ -560,9 +560,9 @@
         // 配置
         // ==========================================
         const CONFIG = {
-            // Upstash Redis 配置 (需要替换为你的配置)
-            REDIS_URL: localStorage.getItem('redis_url') || 'https://your-upstash-url.upstash.io',
-            REDIS_TOKEN: localStorage.getItem('redis_token') || 'your-token-here',
+            // Upstash Redis 配置
+            REDIS_URL: 'https://informed-donkey-72337.upstash.io',
+            REDIS_TOKEN: 'gQAAAAAAARqRAAIncDI5NTg1ZjcyOTE3YWQ0OGQwYjkwZjY5YWU4N2MzMGNhNnAyNzIzMzc',
             
             // 刷新间隔
             REFRESH_INTERVAL: 30000, // 30秒
@@ -580,30 +580,27 @@
         let currentRange = 5; // 默认5分钟
         
         // ==========================================
-        // 数据获取
+        // 数据获取 (从本地 JSON)
         // ==========================================
         async function fetchData() {
             try {
-                // 从 Redis 获取数据
-                const response = await fetch(`${CONFIG.REDIS_URL}/get/cognitive_load`, {
-                    headers: {
-                        'Authorization': `Bearer ${CONFIG.REDIS_TOKEN}`,
-                    }
-                });
+                // 从同域名 JSON 获取数据 (避免 CORS)
+                const response = await fetch('data.json?t=' + Date.now());
                 
                 if (!response.ok) throw new Error('Network error');
                 
-                const result = await response.json();
-                const data = result.result ? JSON.parse(result.result) : null;
+                const data = await response.json();
                 
-                if (data) {
+                if (data && data.timestamp) {
                     currentData = data;
                     updateUI(data);
                     addHistoryPoint(data);
                     saveHistory();
+                    updateConnectionStatus(true);
+                } else {
+                    throw new Error('Invalid data');
                 }
                 
-                updateConnectionStatus(true);
             } catch (error) {
                 console.error('Fetch error:', error);
                 updateConnectionStatus(false);
