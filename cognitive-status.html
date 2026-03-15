@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claw 负载监控系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .version {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* 收音机仪表盘 */
+        .tuner-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .tuner-title {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #00d4ff;
+        }
+        
+        .radio-tuner {
+            width: 300px;
+            height: 150px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .tuner-scale {
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(to right, 
+                #00c853 0%, #00c853 25%,
+                #2979ff 25%, #2979ff 50%,
+                #ffd600 50%, #ffd600 75%,
+                #ff1744 75%, #ff1744 100%
+            );
+            border-radius: 10px;
+            position: relative;
+            top: 80px;
+        }
+        
+        .tuner-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            position: absolute;
+            top: 105px;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .tuner-needle {
+            width: 4px;
+            height: 80px;
+            background: #fff;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(-90deg);
+            transition: transform 0.5s ease;
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        .tuner-center {
+            width: 20px;
+            height: 20px;
+            background: #333;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 3px solid #00d4ff;
+        }
+        
+        .score-display {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .score-value {
+            font-size: 48px;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        
+        .score-label {
+            font-size: 14px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .status-text {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 500;
+        }
+        
+        /* 状态栏 */
+        .status-bar {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 15px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-item .label {
+            color: #888;
+            font-size: 12px;
+        }
+        
+        .status-item .value {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.online { background: #00c853; }
+        .status-dot.busy { background: #ffd600; }
+        .status-dot.error { background: #ff1744; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* 指标卡片 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.08);
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .metric-unit {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* 负载走势图 */
+        .chart-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            color: #00d4ff;
+        }
+        
+        .time-selector {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .time-btn {
+            padding: 5px 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: transparent;
+            color: #888;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .time-btn.active,
+        .time-btn:hover {
+            background: rgba(0,212,255,0.2);
+            color: #00d4ff;
+            border-color: #00d4ff;
+        }
+        
+        #loadChart {
+            width: 100%;
+            height: 200px;
+        }
+        
+        /* 任务队列 */
+        .queue-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .queue-header {
+            font-size: 16px;
+            color: #00d4ff;
+            margin-bottom: 15px;
+        }
+        
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border-left: 3px solid transparent;
+        }
+        
+        .task-item.pending { border-left-color: #ffd600; }
+        .task-item.processing { border-left-color: #2979ff; }
+        .task-item.idle { border-left-color: #00c853; }
+        
+        .task-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 12px;
+        }
+        
+        .task-status.pending { background: #ffd600; }
+        .task-status.processing { background: #2979ff; }
+        .task-status.idle { background: #00c853; }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .task-meta {
+            font-size: 11px;
+            color: #888;
+            margin-top: 3px;
+        }
+        
+        .task-tokens {
+            font-size: 12px;
+            color: #00d4ff;
+            background: rgba(0,212,255,0.1);
+            padding: 3px 10px;
+            border-radius: 10px;
+        }
+        
+        /* 信息面板 */
+        .info-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .info-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+        
+        .info-tab {
+            padding: 8px 20px;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .info-tab.active,
+        .info-tab:hover {
+            background: rgba(0,212,255,0.1);
+            color: #00d4ff;
+        }
+        
+        .info-content {
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .info-content h4 {
+            color: #00d4ff;
+            margin: 15px 0 10px;
+        }
+        
+        .info-content ul {
+            margin-left: 20px;
+            color: #aaa;
+        }
+        
+        .info-content li {
+            margin: 5px 0;
+        }
+        
+        /* 状态颜色 */
+        .status-idle { color: #00c853; background: rgba(0,200,83,0.1); }
+        .status-light { color: #2979ff; background: rgba(41,121,255,0.1); }
+        .status-medium { color: #ffd600; background: rgba(255,214,0,0.1); }
+        .status-heavy { color: #ff1744; background: rgba(255,23,68,0.1); }
+        
+        /* 最后更新时间 */
+        .last-update {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🦑 Claw 负载监控系统</h1>
+        <div class="version">v1.0.0 | 2026-03-15 | 内部技术文档</div>
+    </div>
+    
+    <div class="dashboard">
+        <!-- 收音机仪表盘 -->
+        <div class="tuner-container">
+            <div class="tuner-title">📻 实时认知负载</div>
+            <div class="radio-tuner">
+                <div class="tuner-scale"></div>
+                <div class="tuner-labels">
+                    <span>空闲</span>
+                    <span>轻载</span>
+                    <span>中等</span>
+                    <span>高载</span>
+                </div>
+                <div class="tuner-needle" id="tunerNeedle"></div>
+                <div class="tuner-center"></div>
+            </div>
+            <div class="score-display">
+                <div class="score-value" id="scoreValue">--</div>
+                <div class="score-label">认知评分</div>
+            </div>
+            <div style="text-align: center;">
+                <span class="status-text" id="statusText">加载中...</span>
+            </div>
+        </div>
+        
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot online" id="connDot"></div>
+                <span class="label">连接状态</span>
+                <span class="value" id="connStatus">实时</span>
+            </div>
+            <div class="status-item">
+                <span class="label">频道</span>
+                <span class="value" id="channel">feishu</span>
+            </div>
+            <div class="status-item">
+                <span class="label">模型</span>
+                <span class="value" id="model">k2p5</span>
+            </div>
+            <div class="status-item">
+                <span class="label">Agent状态</span>
+                <span class="value" id="agentStatus">active</span>
+            </div>
+            <div class="status-item">
+                <span class="label">CPU</span>
+                <span class="value" id="cpuUsage">--%</span>
+            </div>
+            <div class="status-item">
+                <span class="label">内存</span>
+                <span class="value" id="memUsage">--%</span>
+            </div>
+        </div>
+        
+        <!-- 指标卡片 -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="activeSessions">--</div>
+                <div class="metric-label">活跃会话</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="pendingTasks">--</div>
+                <div class="metric-label">待处理</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="processingTasks">--</div>
+                <div class="metric-label">处理中</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="maxWaitTime">--</div>
+                <div class="metric-label">最长等待</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="estResponse">--</div>
+                <div class="metric-label">预计响应</div>
+            </div>
+        </div>
+        
+        <!-- 负载走势图 -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <span class="chart-title">📈 负载走势</span>
+                <div class="time-selector">
+                    <button class="time-btn active" data-range="5">5分钟</button>
+                    <button class="time-btn" data-range="15">15分钟</button>
+                    <button class="time-btn" data-range="30">30分钟</button>
+                </div>
+            </div>
+            <canvas id="loadChart"></canvas>
+        </div>
+        
+        <!-- 任务队列 -->
+        <div class="queue-container">
+            <div class="queue-header">📝 任务队列</div>
+            <div class="task-list" id="taskList">
+                <div style="text-align: center; padding: 20px; color: #666;">
+                    <div class="loading"></div>
+                    <p style="margin-top: 10px;">加载中...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 信息面板 -->
+        <div class="info-container">
+            <div class="info-tabs">
+                <button class="info-tab active" data-tab="labels">标签</button>
+                <button class="info-tab" data-tab="metrics">指标</button>
+                <button class="info-tab" data-tab="tips">建议</button>
+                <button class="info-tab" data-tab="status">状态</button>
+            </div>
+            <div class="info-content" id="infoContent">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+        
+        <div class="last-update">
+            最后更新: <span id="lastUpdate">--</span> | 
+            数据每30秒刷新
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 配置
+        // ==========================================
+        const CONFIG = {
+            // Upstash Redis 配置 (需要替换为你的配置)
+            REDIS_URL: localStorage.getItem('redis_url') || 'https://your-upstash-url.upstash.io',
+            REDIS_TOKEN: localStorage.getItem('redis_token') || 'your-token-here',
+            
+            // 刷新间隔
+            REFRESH_INTERVAL: 30000, // 30秒
+            
+            // 历史数据保留点数
+            MAX_HISTORY_POINTS: 180, // 90分钟
+        };
+        
+        // ==========================================
+        // 状态管理
+        // ==========================================
+        let currentData = null;
+        let historyData = JSON.parse(localStorage.getItem('load_history') || '[]');
+        let chartInstance = null;
+        let currentRange = 5; // 默认5分钟
+        
+        // ==========================================
+        // 数据获取
+        // ==========================================
+        async function fetchData() {
+            try {
+                // 从 Redis 获取数据
+                const response = await fetch(`${CONFIG.REDIS_URL}/get/cognitive_load`, {
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.REDIS_TOKEN}`,
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Network error');
+                
+                const result = await response.json();
+                const data = result.result ? JSON.parse(result.result) : null;
+                
+                if (data) {
+                    currentData = data;
+                    updateUI(data);
+                    addHistoryPoint(data);
+                    saveHistory();
+                }
+                
+                updateConnectionStatus(true);
+            } catch (error) {
+                console.error('Fetch error:', error);
+                updateConnectionStatus(false);
+                
+                // 使用本地缓存数据
+                const cached = localStorage.getItem('last_data');
+                if (cached) {
+                    currentData = JSON.parse(cached);
+                    updateUI(currentData);
+                }
+            }
+        }
+        
+        // ==========================================
+        // UI 更新
+        // ==========================================
+        function updateUI(data) {
+            // 保存到本地缓存
+            localStorage.setItem('last_data', JSON.stringify(data));
+            
+            // 更新认知评分
+            const score = Math.round(data.score || 0);
+            updateScore(score);
+            
+            // 更新状态栏
+            document.getElementById('cpuUsage').textContent = `${data.cpu || 0}%`;
+            document.getElementById('memUsage').textContent = `${data.memory || 0}%`;
+            document.getElementById('agentStatus').textContent = data.agent_status || 'active';
+            
+            // 更新指标卡片
+            document.getElementById('activeSessions').textContent = data.active_sessions || 0;
+            document.getElementById('pendingTasks').textContent = data.pending || 0;
+            document.getElementById('processingTasks').textContent = data.processing || 0;
+            document.getElementById('maxWaitTime').textContent = formatTime(data.max_wait || 0);
+            document.getElementById('estResponse').textContent = formatTime(data.est_response || 0);
+            
+            // 更新任务队列
+            updateTaskList(data.tasks || []);
+            
+            // 更新时间
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('zh-CN');
+        }
+        
+        function updateScore(score) {
+            const scoreEl = document.getElementById('scoreValue');
+            const needle = document.getElementById('tunerNeedle');
+            const statusText = document.getElementById('statusText');
+            
+            scoreEl.textContent = `${score}%`;
+            
+            // 计算指针角度 (-90 到 90 度)
+            const angle = -90 + (score / 100) * 180;
+            needle.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+            
+            // 设置颜色和状态文本
+            let status, className, advice;
+            if (score < 25) {
+                scoreEl.style.color = '#00c853';
+                status = '空闲';
+                className = 'status-idle';
+                advice = '系统运行顺畅，可放心使用';
+            } else if (score < 50) {
+                scoreEl.style.color = '#2979ff';
+                status = '轻载';
+                className = 'status-light';
+                advice = '正常负载，响应及时';
+            } else if (score < 75) {
+                scoreEl.style.color = '#ffd600';
+                status = '中等负载';
+                className = 'status-medium';
+                advice = '系统较忙，响应可能延迟';
+            } else {
+                scoreEl.style.color = '#ff1744';
+                status = '高负载';
+                className = 'status-heavy';
+                advice = '系统繁忙，建议稍后再试';
+            }
+            
+            statusText.textContent = `${status} - ${advice}`;
+            statusText.className = `status-text ${className}`;
+        }
+        
+        function updateTaskList(tasks) {
+            const container = document.getElementById('taskList');
+            
+            if (tasks.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">暂无任务</div>';
+                return;
+            }
+            
+            container.innerHTML = tasks.map(task => {
+                const statusClass = task.status || 'idle';
+                const statusText = {
+                    pending: '等待中',
+                    processing: '处理中',
+                    idle: '空闲'
+                }[statusClass] || statusClass;
+                
+                return `
+                    <div class="task-item ${statusClass}">
+                        <div class="task-status ${statusClass}"></div>
+                        <div class="task-info">
+                            <div class="task-name">${task.name || task.id || '未知任务'}</div>
+                            <div class="task-meta">${statusText} | 最后活跃: ${formatTime(task.last_active || 0)}前</div>
+                        </div>
+                        <div class="task-tokens">${formatTokens(task.tokens || 0)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('connDot');
+            const status = document.getElementById('connStatus');
+            
+            if (connected) {
+                dot.className = 'status-dot online';
+                status.textContent = '实时';
+                status.style.color = '#00c853';
+            } else {
+                dot.className = 'status-dot error';
+                status.textContent = '离线';
+                status.style.color = '#ff1744';
+            }
+        }
+        
+        // ==========================================
+        // 历史数据管理
+        // ==========================================
+        function addHistoryPoint(data) {
+            const point = {
+                time: Date.now(),
+                score: data.score || 0,
+                active_sessions: data.active_sessions || 0,
+                pending: data.pending || 0
+            };
+            
+            historyData.push(point);
+            
+            // 限制历史数据长度
+            if (historyData.length > CONFIG.MAX_HISTORY_POINTS) {
+                historyData = historyData.slice(-CONFIG.MAX_HISTORY_POINTS);
+            }
+        }
+        
+        function saveHistory() {
+            localStorage.setItem('load_history', JSON.stringify(historyData));
+        }
+        
+        function getFilteredHistory() {
+            const now = Date.now();
+            const rangeMs = currentRange * 60 * 1000;
+            return historyData.filter(p => now - p.time <= rangeMs);
+        }
+        
+        // ==========================================
+        // 图表绘制
+        // ==========================================
+        function initChart() {
+            const canvas = document.getElementById('loadChart');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置 canvas 尺寸
+            function resize() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                canvas.width = rect.width * window.devicePixelRatio;
+                canvas.height = 200 * window.devicePixelRatio;
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = '200px';
+            }
+            
+            resize();
+            window.addEventListener('resize', () => {
+                resize();
+                drawChart();
+            });
+            
+            drawChart();
+        }
+        
+        function drawChart() {
+            const canvas = document.getElementById('loadChart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width / window.devicePixelRatio;
+            const height = 200;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, width, height);
+            
+            const data = getFilteredHistory();
+            if (data.length < 2) {
+                ctx.fillStyle = '#666';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('数据收集中...', width / 2, height / 2);
+                return;
+            }
+            
+            // 绘制网格线
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = (height - 40) * (i / 4) + 20;
+                ctx.beginPath();
+                ctx.moveTo(50, y);
+                ctx.lineTo(width - 20, y);
+                ctx.stroke();
+            }
+            
+            // 绘制参考线 (20, 40, 60)
+            [20, 40, 60].forEach(val => {
+                const y = height - 20 - (val / 100) * (height - 40);
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(50, y);
+                ctx.lineTo(width - 20, y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            });
+            
+            // 绘制负载曲线
+            const padding = { left: 50, right: 20, top: 20, bottom: 20 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+            
+            const minTime = data[0].time;
+            const maxTime = data[data.length - 1].time;
+            const timeRange = maxTime - minTime || 1;
+            
+            // 绘制面积
+            ctx.beginPath();
+            ctx.moveTo(padding.left, height - padding.bottom);
+            
+            data.forEach((point, i) => {
+                const x = padding.left + ((point.time - minTime) / timeRange) * chartWidth;
+                const y = height - padding.bottom - (point.score / 100) * chartHeight;
+                
+                if (i === 0) {
+                    ctx.lineTo(x, y);
+                } else {
+                    // 平滑曲线
+                    const prev = data[i - 1];
+                    const prevX = padding.left + ((prev.time - minTime) / timeRange) * chartWidth;
+                    const prevY = height - padding.bottom - (prev.score / 100) * chartHeight;
+                    const cpX = (prevX + x) / 2;
+                    ctx.quadraticCurveTo(prevX, prevY, cpX, (prevY + y) / 2);
+                    if (i === data.length - 1) {
+                        ctx.lineTo(x, y);
+                    }
+                }
+            });
+            
+            ctx.lineTo(padding.left + chartWidth, height - padding.bottom);
+            ctx.closePath();
+            
+            // 渐变色填充
+            const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+            gradient.addColorStop(0, 'rgba(0,212,255,0.3)');
+            gradient.addColorStop(1, 'rgba(0,212,255,0.05)');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // 绘制线条
+            ctx.beginPath();
+            data.forEach((point, i) => {
+                const x = padding.left + ((point.time - minTime) / timeRange) * chartWidth;
+                const y = height - padding.bottom - (point.score / 100) * chartHeight;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 绘制 Y 轴标签
+            ctx.fillStyle = '#888';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 4; i++) {
+                const val = 100 - i * 25;
+                const y = padding.top + (i / 4) * chartHeight + 3;
+                ctx.fillText(val + '%', padding.left - 10, y);
+            }
+        }
+        
+        // ==========================================
+        // 信息面板内容
+        // ==========================================
+        const INFO_CONTENT = {
+            labels: `
+                <h4>任务标签说明</h4>
+                <ul>
+                    <li><strong>代码开发</strong> - 编程相关任务，如代码编写、调试、重构</li>
+                    <li><strong>数据分析</strong> - 数据处理、统计分析、可视化</li>
+                    <li><strong>文档处理</strong> - 文档编辑、翻译、总结</li>
+                    <li><strong>系统运维</strong> - 服务器管理、部署、监控</li>
+                    <li><strong>知识问答</strong> - 一般性咨询、问题解答</li>
+                    <li><strong>创意生成</strong> - 文案创作、设计建议、头脑风暴</li>
+                    <li><strong>代码审查</strong> - PR Review、代码质量检查</li>
+                    <li><strong>技术研究</strong> - 技术调研、方案评估</li>
+                    <li><strong>会议辅助</strong> - 会议纪要、议程安排</li>
+                    <li><strong>学习辅导</strong> - 教学、概念解释、习题解答</li>
+                    <li><strong>项目管理</strong> - 任务规划、进度跟踪</li>
+                    <li><strong>沟通协调</strong> - 消息转发、多轮对话</li>
+                    <li><strong>其他</strong> - 未分类的杂项任务</li>
+                </ul>
+            `,
+            metrics: `
+                <h4>认知评分算法 (Mixed Score)</h4>
+                <p><strong>最终评分 = 基础评分 + max(等待评分, Token评分) + 处理加成</strong></p>
+                
+                <h4>基础评分</h4>
+                <p>固定值: 50%</p>
+                
+                <h4>等待评分 (基于最长等待时间)</h4>
+                <ul>
+                    <li>0-10秒: 20-30%</li>
+                    <li>10-30秒: 30-55%</li>
+                    <li>30-60秒: 55-80%</li>
+                    <li>60秒以上: 80-95%</li>
+                </ul>
+                
+                <h4>Token评分 (基于处理中任务)</h4>
+                <ul>
+                    <li>10K tokens: ~10%</li>
+                    <li>50K tokens: ~30%</li>
+                    <li>100K tokens: ~50%</li>
+                    <li>200K+ tokens: 75-80%</li>
+                </ul>
+                
+                <h4>处理加成</h4>
+                <p>每个处理中任务 +3% (上限15%)</p>
+                
+                <h4>预计响应时间</h4>
+                <p><code>estimated = processing * 30 + min(60, tokens/50000 * 30) + pending * 15</code></p>
+            `,
+            tips: `
+                <h4>负载区间建议</h4>
+                
+                <h4 style="color: #00c853;">空闲 (0-25%)</h4>
+                <ul>
+                    <li>系统运行顺畅，响应速度最快</li>
+                    <li>适合提交复杂任务或批量处理</li>
+                    <li>可放心进行多轮对话</li>
+                </ul>
+                
+                <h4 style="color: #2979ff;">轻载 (25-50%)</h4>
+                <ul>
+                    <li>正常负载水平，响应及时</li>
+                    <li>可正常使用各类功能</li>
+                    <li>长文本处理可能需要稍等</li>
+                </ul>
+                
+                <h4 style="color: #ffd600;">中等 (50-75%)</h4>
+                <ul>
+                    <li>系统较忙，响应可能延迟</li>
+                    <li>建议简化任务或分步骤提交</li>
+                    <li>避免同时发起多个复杂请求</li>
+                </ul>
+                
+                <h4 style="color: #ff1744;">高载 (75-100%)</h4>
+                <ul>
+                    <li>系统繁忙，响应明显延迟</li>
+                    <li>建议稍后重试或提交简单任务</li>
+                    <li>紧急事务请耐心等待</li>
+                </ul>
+            `,
+            status: `
+                <h4>会话状态定义</h4>
+                
+                <h4 style="color: #ffd600;">等待中 (Pending)</h4>
+                <ul>
+                    <li>用户已发送消息</li>
+                    <li>尚未开始处理</li>
+                    <li>在队列中排队</li>
+                </ul>
+                
+                <h4 style="color: #2979ff;">处理中 (Processing)</h4>
+                <ul>
+                    <li>Agent 正在执行任务</li>
+                    <li>消耗系统资源</li>
+                    <li>预计30秒-5分钟完成</li>
+                </ul>
+                
+                <h4 style="color: #00c853;">空闲 (Idle)</h4>
+                <ul>
+                    <li>会话活跃但无待处理任务</li>
+                    <li>可立即响应新消息</li>
+                    <li>占用最小资源</li>
+                </ul>
+            `
+        };
+        
+        // ==========================================
+        // 工具函数
+        // ==========================================
+        function formatTime(seconds) {
+            if (seconds < 60) return `${seconds}s`;
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return secs > 0 ? `${mins}m${secs}s` : `${mins}m`;
+        }
+        
+        function formatTokens(tokens) {
+            if (tokens < 1000) return `${tokens}t`;
+            return `${(tokens / 1000).toFixed(1)}k`;
+        }
+        
+        // ==========================================
+        // 事件绑定
+        // ==========================================
+        function bindEvents() {
+            // 时间范围切换
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentRange = parseInt(btn.dataset.range);
+                    drawChart();
+                });
+            });
+            
+            // 信息标签切换
+            document.querySelectorAll('.info-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.info-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById('infoContent').innerHTML = INFO_CONTENT[tab.dataset.tab];
+                });
+            });
+            
+            // 初始化信息内容
+            document.getElementById('infoContent').innerHTML = INFO_CONTENT.labels;
+        }
+        
+        // ==========================================
+        // 初始化
+        // ==========================================
+        function init() {
+            bindEvents();
+            initChart();
+            fetchData();
+            
+            // 定时刷新
+            setInterval(fetchData, CONFIG.REFRESH_INTERVAL);
+            
+            // 定时重绘图表 (用于更新时间轴)
+            setInterval(drawChart, 60000);
+        }
+        
+        // 启动
+        init();
+    </script>
+</body>
+</html>

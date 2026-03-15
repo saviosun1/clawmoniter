@@ -1,48 +1,101 @@
-# Claw负载监控系统技术白皮书
+# Claw 负载监控系统
 
-**版本**: v5.20.3 (Rollback)  
-**日期**: 2026-03-15  
-**文档状态**: 内部技术文档
+实时展示 AI Agent 运行状态的可视化仪表盘。
 
----
+## 功能特性
 
-## 1. 系统概述
+- 📻 **收音机式仪表盘** - 直观的认知评分显示
+- 📊 **实时状态监控** - CPU、内存、会话数等指标
+- 📈 **负载走势图** - 支持多时间范围切换
+- 📝 **任务队列** - 智能标签、Token 显示
+- 💾 **历史数据** - SQLite 本地存储，Redis 云端同步
 
-### 1.1 产品定位
-认知负载监控系统（Cognitive Load Monitor）是一个实时展示 AI Agent 运行状态的可视化仪表盘。通过分析会话活跃度、消息等待时间、Token 消耗量等指标，为用户提供一个直观的"健康状态"视图。
+## 快速开始
 
-### 1.2 核心价值
-- **透明度**: 让用户了解 Agent 当前的工作负载
-- **预期管理**: 通过预计响应时间帮助用户合理安排任务
-- **历史追踪**: 记录负载变化趋势，支持性能分析
+### 1. 安装依赖
 
----
-
-## 2. 功能详细说明
-
-### 2.1 核心功能模块
-
-#### 2.1.1 实时状态仪表盘 (Radio Tuner)
-
-| 功能项 | 说明 | 数据来源 |
-|--------|------|----------|
-| 认知评分 | 0-100% 连续值，综合反映当前负载 | 混合算法计算 |
-| 状态指示灯 | 四色分区：空闲(绿)/轻载(蓝)/中等(黄)/高载(红) | 评分映射 |
-| 动态指针 | 收音机式指针，实时指向当前负载位置 | CSS动画 |
-| 状态文本 | 文字描述当前状态和建议 | 评分区间映射 |
-
-**评分算法 (Mixed Score Algorithm)**:
+```bash
+pip install redis psutil
 ```
-最终评分 = 基础评分 + max(等待评分, Token评分) + 处理加成
 
-基础评分: 50 (恒定)
-等待评分: 基于最长等待消息的时间 (0-95分)
+### 2. 配置 Redis (可选)
+
+如果使用 Upstash Redis，设置环境变量：
+
+```bash
+export REDIS_URL="https://your-upstash-url.upstash.io"
+export REDIS_TOKEN="your-token-here"
+```
+
+或者使用本地 Redis：
+```bash
+docker run -d -p 6379:6379 redis:alpine
+```
+
+### 3. 启动监控服务
+
+```bash
+python3 cognitive_monitor.py
+```
+
+### 4. 打开仪表盘
+
+直接在浏览器中打开 `cognitive-status.html`，或部署到静态服务器：
+
+```bash
+# 本地测试
+python3 -m http.server 8000
+
+# 然后访问
+open http://localhost:8000/cognitive-status.html
+```
+
+## 文件说明
+
+| 文件 | 说明 |
+|------|------|
+| `cognitive-status.html` | 前端仪表盘页面 |
+| `cognitive_monitor.py` | 后端数据采集服务 |
+| `README.md` | 本文档 |
+
+## 配置说明
+
+### 前端配置
+
+首次打开页面时，点击页面设置 Redis 连接信息，或直接在浏览器控制台执行：
+
+```javascript
+localStorage.setItem('redis_url', 'https://your-url.upstash.io');
+localStorage.setItem('redis_token', 'your-token');
+location.reload();
+```
+
+### 后端配置
+
+编辑 `cognitive_monitor.py` 中的 `CONFIG` 字典：
+
+```python
+CONFIG = {
+    "SESSIONS_DIR": "/root/.openclaw/agents/main/sessions",  # 会话目录
+    "ACTIVE_THRESHOLD": 600,  # 活跃判定时间(秒)
+    "REDIS_URL": "redis://localhost:6379",
+    "UPDATE_INTERVAL": 15,  # 更新间隔(秒)
+    "HISTORY_DB": "/var/lib/cognitive_monitor/history.db",
+}
+```
+
+## 评分算法
+
+```
+最终评分 = 基础评分(50) + max(等待评分, Token评分) + 处理加成
+
+等待评分: 基于最长等待消息时间
   - 0-10s: 20-30%
   - 10-30s: 30-55%
   - 30-60s: 55-80%
   - 60s+: 80-95%
-  
-Token评分: 只计算处理中任务的Token量 (0-20分)
+
+Token评分: 基于处理中任务的Token量
   - 10k: ~10%
   - 50k: ~30%
   - 100k: ~50%
@@ -51,216 +104,57 @@ Token评分: 只计算处理中任务的Token量 (0-20分)
 处理加成: 每个处理中任务 +3% (最多+15%)
 ```
 
-#### 2.1.2 状态栏 (Status Bar)
-
-| 指标 | 说明 | 更新频率 |
-|------|------|----------|
-| 连接状态 | 实时/离线/高负载 | 每次刷新 |
-| 频道 | 当前消息来源 (feishu/telegram等) | 静态配置 |
-| 模型 | 当前使用的AI模型 (k2p5等) | 静态配置 |
-| Agent状态 | active/busy/error | 每次刷新 |
-| CPU使用率 | 服务器CPU占用百分比 | 每次刷新 |
-| 内存占用 | 服务器内存占用百分比 | 每次刷新 |
-
-#### 2.1.3 指标卡片 (Metrics Grid)
-
-| 指标 | 说明 | 单位 |
-|------|------|------|
-| 活跃会话 | 最近10分钟内有活动的会话数 | 个 |
-| 待处理 | 用户已发消息但未开始处理的数量 | 个 |
-| 处理中 | 当前正在执行的任务数 | 个 |
-| 最长等待 | 最久一条消息等待回复的时间 | 秒/分钟 |
-| 预计响应 | 基于当前负载估算的响应时间 | 秒/分钟 |
-
-**预计响应时间算法**:
-```python
-estimated_response = processing_count * 30  # 基础时间
-                     + min(60, tokens/50000 * 30)  # Token加成
-                     + pending_count * 15  # 排队时间
-```
-
-#### 2.1.4 负载走势图 (Stock Chart)
-
-| 特性 | 说明 |
-|------|------|
-| 时间范围 | 支持5分钟/15分钟/30分钟切换 |
-| 图表类型 | K线图风格，显示最高/最低/平均值 |
-| 颜色方案 | 涨绿跌红，符合中国用户习惯 |
-| 参考线 | 显示20/40/60三个阈值线 |
-
-**数据存储**:
-- 实时数据: Redis (Upstash)
-- 历史数据: 本地 SQLite (`/var/lib/cognitive_monitor/history.db`)
-- 聚合策略: 每分钟存储一个数据点
-
-#### 2.1.5 任务队列 (Task Queue)
-
-| 功能 | 说明 |
-|------|------|
-| 智能标签 | 将会话ID转换为可读标签 (如"SRPG: 天地劫数据分析") |
-| 状态显示 | 等待中(黄)/处理中(蓝)/空闲(绿) |
-| Token显示 | 显示该会话的上下文Token量 |
-| 最后活跃 | 显示最后消息时间 |
-
-
-#### 2.1.6 信息面板 (Info Tabs)
-
-| Tab | 内容 |
-|-----|------|
-| 标签 | 13个预设任务的标签说明 |
-| 指标 | 评分算法详细解释 |
-| 建议 | 各负载区间的使用建议 |
-| 状态 | 三种会话状态的定义说明 |
-
----
-
-## 3. 技术架构
-
-### 3.1 系统架构图
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        客户端 (浏览器)                        │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  cognitive-status.html                                │  │
-│  │  - 内联 CSS (581行)                                    │  │
-│  │  - 内联 JavaScript (397行)                             │  │
-│  │  - 直接调用 Upstash Redis API                          │  │
-│  └───────────────────────────────────────────────────────┘  │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ HTTPS + REST API
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Upstash Redis (云服务)                      │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Key: cognitive.json                                  │  │
-│  │  Value: 实时负载数据 (JSON)                            │  │
-│  │  TTL: 永久存储                                         │  │
-│  └───────────────────────────────────────────────────────┘  │
-└───────────────────────────┬─────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   数据采集服务 (Python)                       │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  cognitive_monitor.py                                 │  │
-│  │  - 扫描会话目录                                        │  │
-│  │  - 分析消息状态                                        │  │
-│  │  - 计算负载评分                                        │  │
-│  │  - 每15秒更新一次                                      │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 3.2 数据流
-
-```
-1. cognitive_monitor.py 扫描 /root/.openclaw/agents/main/sessions/
-2. 分析每个会话的最后修改时间、消息内容、Token量
-3. 计算综合评分和各项指标
-4. 写入 Redis (Upstash)
-5. 前端每30秒从 Redis 拉取数据
-6. 更新UI显示
-```
-
-### 3.3 文件结构
-
-```
-portfolio-blog/status-monitor/
-├── cognitive-status.html    # 主页面 (1217行，内联CSS+JS)
-├── index.html               # 旧版页面 (已废弃)
-├── test.html                # 诊断测试页
-├── cognitive-status.css     # 已废弃 (文件拆分失败)
-├── cognitive-status.js      # 已废弃 (文件拆分失败)
-└── api_server.py            # 已废弃 (API代理方案)
-```
-
----
-
-
-## 4. 运维指南
-
-### 4.1 部署流程
+## 部署到 GitHub Pages
 
 ```bash
-# 1. 本地验证
-open http://localhost:8000/status-monitor/cognitive-status.html
+# 1. Fork 或克隆本仓库
+git clone https://github.com/saviosun1/clawmoniter.git
+cd clawmoniter
 
 # 2. 提交代码
-git add status-monitor/
-git commit -m "feat: xxx"
-git push origin main
-
-# 3. 等待部署 (GitHub Pages 1-2分钟)
-# 4. 线上验证
-open https://hiyascott.github.io/scott-portfolio/status-monitor/cognitive-status.html
-
-# 5. 强制刷新测试 (Ctrl+F5)
-```
-
-### 4.2 故障排查
-
-| 问题 | 排查步骤 | 解决方案 |
-|------|----------|----------|
-| 页面空白 | 检查 DevTools Console | 查看 JS 错误，回滚到稳定版本 |
-| 连接失败 | 检查网络/Token有效性 | 验证 Token 未过期，检查 CORS |
-| 数据不更新 | 检查 cognitive_monitor.py | 重启监控服务 |
-| 版本不一致 | 检查 CDN 缓存 | 强制刷新或等待 CDN 刷新 |
-
-### 4.3 备份与回滚
-
-```bash
-# 创建备份标签
-git tag backup-$(date +%Y%m%d-%H%M)
-git push origin --tags
-
-# 回滚到指定版本
-git checkout <tag> -- status-monitor/cognitive-status.html
 git add .
-git commit -m "rollback: 回滚到备份版本"
+git commit -m "feat: 初始版本"
 git push origin main
+
+# 3. 开启 GitHub Pages
+# 进入仓库 Settings -> Pages -> Source 选择 main 分支
+
+# 4. 访问
+# https://your-username.github.io/clawmoniter/cognitive-status.html
 ```
 
----
-
-## 5. 版本历史
-
-| 版本 | 日期 | 变更内容 | 状态 |
-|------|------|----------|------|
-| v5.14.0 | 2026-03-14 | Mixed Score算法、Token负载显示 | 稳定 |
-| v5.16.0 | 2026-03-14 | 任务标签细化 | 稳定 |
-| v5.18.0 | 2026-03-15 | 股票走势图、预计响应时间 | 稳定 |
-| v5.20.0 | 2026-03-15 | 文件拆分 (CSS/JS分离) | ❌ 失败 |
-| v5.20.1 | 2026-03-15 | 回滚到直接Redis访问 | 临时 |
-| v5.20.2 | 2026-03-15 | 修复JS ID不匹配 | ❌ 失败 |
-| v5.20.3 | 2026-03-15 | **回滚到备份版本** | ✅ 当前 |
-
----
-
-## 6. 附录
-
-### 6.1 相关文件路径
+## 架构图
 
 ```
-/root/.openclaw/workspace/
-├── cognitive_monitor.py              # 监控服务主程序
-├── portfolio-blog/status-monitor/
-│   ├── cognitive-status.html         # 主页面
-│   └── ...
-└── /var/lib/cognitive_monitor/
-    └── history.db                    # SQLite历史数据
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   浏览器页面     │────▶│  Upstash Redis  │◀────│  Python 采集器   │
+│ cognitive-status │     │   (云端数据)     │     │cognitive_monitor│
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+                              ┌─────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │  OpenClaw 会话   │
+                    │  /sessions/*.jsonl│
+                    └─────────────────┘
 ```
 
-### 6.2 外部依赖
+## 故障排查
 
-| 服务 | 用途 | 状态 |
+| 问题 | 解决方案 |
+|------|----------|
+| 页面显示 "加载中" | 检查 Redis 连接配置 |
+| 数据不更新 | 确认 cognitive_monitor.py 正在运行 |
+| 会话数为 0 | 检查 SESSIONS_DIR 路径是否正确 |
+| CPU/内存显示为 0 | 安装 psutil: `pip install psutil` |
+
+## 版本历史
+
+| 版本 | 日期 | 变更 |
 |------|------|------|
-| Upstash Redis | 实时数据存储 | 运行中 |
-| GitHub Pages | 静态页面托管 | 运行中 |
-| Python cognitive_monitor | 数据采集 | 需检查 |
+| v1.0.0 | 2026-03-15 | 初始版本，基础监控功能 |
 
+## 许可证
 
----
-
-**免责声明**: 本文档包含系统安全漏洞信息，仅供内部技术团队使用，请勿外传。
-
+MIT
