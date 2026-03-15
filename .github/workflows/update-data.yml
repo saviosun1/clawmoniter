@@ -10,42 +10,86 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-python@v4
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         
-    - run: pip install redis requests
-    
-    - name: Fetch data
+    - name: Install dependencies
+      run: pip install redis requests
+      
+    - name: Fetch and save data
       env:
         REDIS_URL: ${{ secrets.REDIS_URL }}
-        REDIS_TOKEN: ${{ secrets.REDIS_TOKEN }}
       run: |
         python3 << 'EOF'
-        import json, os, redis
+        import json
+        import os
+        import sys
+        import redis
         from datetime import datetime
+        from urllib.parse import urlparse
         
-        r = redis.Redis(
-            host=os.environ['REDIS_URL'].replace('https://', ''),
-            port=6379,
-            password=os.environ['REDIS_TOKEN'],
-            ssl=True, decode_responses=True
-        )
+        redis_url = os.environ.get('REDIS_URL', '')
+        print(f"REDIS_URL set: {'Yes' if redis_url else 'No'}")
         
-        data = r.get('cognitive_load')
-        if data:
-            parsed = json.loads(data)
-            parsed['_fetched_at'] = datetime.now().isoformat()
-            with open('data.json', 'w') as f:
-                json.dump(parsed, f, indent=2)
-            print(f"Updated: {parsed.get('score')}%")
+        if not redis_url:
+            print("ERROR: REDIS_URL not set!")
+            sys.exit(1)
+        
+        try:
+            if redis_url.startswith('rediss://'):
+                parsed = urlparse(redis_url)
+                host = parsed.hostname
+                port = parsed.port or 6379
+                password = parsed.password
+                
+                print(f"Connecting to {host}:{port}")
+                
+                r = redis.Redis(
+                    host=host,
+                    port=port,
+                    password=password,
+                    ssl=True,
+                    decode_responses=True,
+                    socket_connect_timeout=10
+                )
+            else:
+                print("ERROR: URL must start with rediss://")
+                sys.exit(1)
+            
+            print("Testing connection...")
+            r.ping()
+            print("Connected!")
+            
+            data = r.get('cognitive_load')
+            
+            if data:
+                parsed = json.loads(data)
+                parsed['_fetched_at'] = datetime.now().isoformat()
+                if 'activities' not in parsed:
+                    parsed['activities'] = []
+                
+                with open('data.json', 'w') as f:
+                    json.dump(parsed, f, indent=2)
+                
+                print(f"SUCCESS: {parsed.get('score')}% | {parsed.get('active_sessions')} sessions")
+            else:
+                print("No data in Redis")
+                sys.exit(1)
+                    
+        except Exception as e:
+            print(f"ERROR: {e}")
+            sys.exit(1)
         EOF
                 
-    - run: |
-        git config user.email "action@github.com"
-        git config user.name "GitHub Action"
+    - name: Commit and push
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
         git add data.json
-        git commit -m "Update data" || exit 0
-        git push      
+        git diff --quiet || git commit -m "Update: $(date +%H:%M:%S)"
+        git push        
