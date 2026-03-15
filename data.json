@@ -1,0 +1,22 @@
+{
+  "score": 55,
+  "active_sessions": 1,
+  "pending": 0,
+  "processing": 0,
+  "max_wait": 0,
+  "est_response": 10,
+  "cpu": 15.0,
+  "memory": 30.0,
+  "agent_status": "active",
+  "timestamp": 1773576661.1405468,
+  "tasks": [
+    {
+      "id": "5eedd28a",
+      "name": "\u4f1a\u8bdd",
+      "status": "idle",
+      "tokens": 1000,
+      "last_active": 5
+    }
+  ],
+  "_fetched_at": "2026-03-15T12:18:53.906449"
+}
