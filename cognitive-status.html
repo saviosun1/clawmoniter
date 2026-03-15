@@ -346,6 +346,145 @@
             border-radius: 10px;
         }
         
+        /* 正在运行的活动 */
+        .activities-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .activities-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .activities-title {
+            font-size: 16px;
+            color: #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .activities-count {
+            background: rgba(0,212,255,0.2);
+            color: #00d4ff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .activity-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .activity-item:hover {
+            background: rgba(255,255,255,0.06);
+            transform: translateX(4px);
+        }
+        
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .activity-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .activity-type {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 8px;
+            background: rgba(0,212,255,0.15);
+            color: #00d4ff;
+        }
+        
+        .activity-status {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 8px;
+        }
+        
+        .activity-status.running { 
+            background: rgba(0,200,83,0.2); 
+            color: #00c853; 
+        }
+        .activity-status.pausing { 
+            background: rgba(255,214,0,0.2); 
+            color: #ffd600; 
+        }
+        
+        .activity-progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .activity-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease, background 0.3s ease;
+        }
+        
+        .activity-progress-fill.low { background: linear-gradient(90deg, #ff1744, #ff6b6b); }
+        .activity-progress-fill.medium { background: linear-gradient(90deg, #ffd600, #ffeb3b); }
+        .activity-progress-fill.high { background: linear-gradient(90deg, #00c853, #64dd17); }
+        
+        .activity-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .activity-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .activity-stat-value {
+            color: #00d4ff;
+            font-weight: 500;
+        }
+        
+        .activity-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .activity-empty-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+        
         /* 信息面板 */
         .info-container {
             background: rgba(255,255,255,0.05);
@@ -432,7 +571,7 @@
 <body>
     <div class="header">
         <h1>🦑 Claw 负载监控系统</h1>
-        <div class="version">v1.0.0 | 2026-03-15 | 内部技术文档</div>
+        <div class="version">v1.1.0 | 2026-03-15 | 新增活动追踪功能</div>
     </div>
     
     <div class="dashboard">
@@ -523,6 +662,23 @@
                 </div>
             </div>
             <canvas id="loadChart"></canvas>
+        </div>
+        
+        <!-- 正在运行的活动 -->
+        <div class="activities-container">
+            <div class="activities-header">
+                <div class="activities-title">
+                    ⚡ 正在运行的活动
+                    <span class="activities-count" id="activitiesCount">0</span>
+                </div>
+            </div>
+            <div class="activity-list" id="activityList">
+                <div class="activity-empty">
+                    <div class="activity-empty-icon">☕</div>
+                    <p>暂无正在运行的活动</p>
+                    <p style="font-size: 12px; margin-top: 5px;">系统空闲中...</p>
+                </div>
+            </div>
         </div>
         
         <!-- 任务队列 -->
@@ -640,8 +796,76 @@
             // 更新任务队列
             updateTaskList(data.tasks || []);
             
+            // 更新活动列表
+            updateActivityList(data.activities || []);
+            
             // 更新时间
             document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('zh-CN');
+        }
+        
+        function updateActivityList(activities) {
+            const container = document.getElementById('activityList');
+            const countEl = document.getElementById('activitiesCount');
+            
+            countEl.textContent = activities.length;
+            
+            if (activities.length === 0) {
+                container.innerHTML = `
+                    <div class="activity-empty">
+                        <div class="activity-empty-icon">☕</div>
+                        <p>暂无正在运行的活动</p>
+                        <p style="font-size: 12px; margin-top: 5px;">系统空闲中...</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = activities.map(act => {
+                const progressClass = act.progress < 30 ? 'low' : (act.progress < 70 ? 'medium' : 'high');
+                const statusClass = act.status === 'running' ? 'running' : 'pausing';
+                const statusText = act.status === 'running' ? '进行中' : '暂停中';
+                
+                return `
+                    <div class="activity-item">
+                        <div class="activity-header">
+                            <div class="activity-name">
+                                ${act.name}
+                                <span class="activity-type">${act.type}</span>
+                            </div>
+                            <span class="activity-status ${statusClass}">${statusText}</span>
+                        </div>
+                        
+                        <div class="activity-progress-bar">
+                            <div class="activity-progress-fill ${progressClass}" style="width: ${act.progress}%"></div>
+                        </div>
+                        
+                        <div class="activity-stats">
+                            <div class="activity-stat">
+                                <span>📊 进度:</span>
+                                <span class="activity-stat-value">${act.progress}%</span>
+                            </div>
+                            <div class="activity-stat">
+                                <span>⏱️ 已运行:</span>
+                                <span class="activity-stat-value">${act.duration_text}</span>
+                            </div>
+                            <div class="activity-stat">
+                                <span>⏳ 预估剩余:</span>
+                                <span class="activity-stat-value">${act.estimated_remaining_text}</span>
+                            </div>
+                            <div class="activity-stat">
+                                <span>💬 消息:</span>
+                                <span class="activity-stat-value">${act.messages_count}</span>
+                            </div>
+                            ${act.subtasks_completed > 0 ? `
+                            <div class="activity-stat">
+                                <span>✅ 已完成:</span>
+                                <span class="activity-stat-value">${act.subtasks_completed} 个子任务</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
         
         function updateScore(score) {
