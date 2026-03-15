@@ -1,5 +1,5 @@
 {
-  "timestamp": 1773617293.0907977,
+  "timestamp": 1773617342.114409,
   "score": 75,
   "active_sessions": 1,
   "pending": 0,
@@ -7,7 +7,7 @@
   "max_wait": 0,
   "est_response": 0,
   "cpu": 0.0,
-  "memory": 41.4,
+  "memory": 42.4,
   "agent_status": "active",
   "tasks": [
     {
@@ -15,27 +15,10 @@
       "name": "会话",
       "status": "idle",
       "tokens": 0,
-      "last_active": 2
+      "last_active": 0
     }
   ],
   "activities": [
-    {
-      "id": "257c95d6a1b2",
-      "name": "方案讨论",
-      "type": "知识问答",
-      "type_code": "qa",
-      "status": "running",
-      "progress": 88.0,
-      "estimated_remaining": 8,
-      "estimated_remaining_text": "8秒",
-      "duration": 59,
-      "duration_text": "59秒",
-      "messages_count": 26,
-      "tokens_in": 0,
-      "tokens_out": 0,
-      "subtasks_completed": 0,
-      "session_id": "8c804e4d"
-    },
     {
       "id": "20a061eb34a5",
       "name": "技术咨询",
@@ -43,11 +26,28 @@
       "type_code": "qa",
       "status": "running",
       "progress": 95,
-      "estimated_remaining": 38,
-      "estimated_remaining_text": "38秒",
-      "duration": 740,
-      "duration_text": "12分钟",
+      "estimated_remaining": 41,
+      "estimated_remaining_text": "41秒",
+      "duration": 789,
+      "duration_text": "13分钟",
       "messages_count": 105,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "subtasks_completed": 0,
+      "session_id": "8c804e4d"
+    },
+    {
+      "id": "257c95d6a1b2",
+      "name": "方案讨论",
+      "type": "知识问答",
+      "type_code": "qa",
+      "status": "running",
+      "progress": 95,
+      "estimated_remaining": 5,
+      "estimated_remaining_text": "5秒",
+      "duration": 108,
+      "duration_text": "1分钟",
+      "messages_count": 46,
       "tokens_in": 0,
       "tokens_out": 0,
       "subtasks_completed": 0,
