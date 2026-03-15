@@ -1,0 +1,51 @@
+name: Update Monitor Data
+
+on:
+  schedule:
+    - cron: '*/1 * * * *'
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - run: pip install redis requests
+    
+    - name: Fetch data
+      env:
+        REDIS_URL: ${{ secrets.REDIS_URL }}
+        REDIS_TOKEN: ${{ secrets.REDIS_TOKEN }}
+      run: |
+        python3 << 'EOF'
+        import json, os, redis
+        from datetime import datetime
+        
+        r = redis.Redis(
+            host=os.environ['REDIS_URL'].replace('https://', ''),
+            port=6379,
+            password=os.environ['REDIS_TOKEN'],
+            ssl=True, decode_responses=True
+        )
+        
+        data = r.get('cognitive_load')
+        if data:
+            parsed = json.loads(data)
+            parsed['_fetched_at'] = datetime.now().isoformat()
+            with open('data.json', 'w') as f:
+                json.dump(parsed, f, indent=2)
+            print(f"Updated: {parsed.get('score')}%")
+        EOF
+                
+    - run: |
+        git config user.email "action@github.com"
+        git config user.name "GitHub Action"
+        git add data.json
+        git commit -m "Update data" || exit 0
+        git push      
