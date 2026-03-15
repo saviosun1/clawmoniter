@@ -1,13 +1,13 @@
 {
-  "timestamp": 1773581191.287385,
+  "timestamp": 1773582658.3555436,
   "score": 75,
-  "active_sessions": 3,
+  "active_sessions": 4,
   "pending": 0,
   "processing": 0,
   "max_wait": 0,
   "est_response": 0,
-  "cpu": 0.5,
-  "memory": 36.8,
+  "cpu": 1.0,
+  "memory": 41.0,
   "agent_status": "active",
   "tasks": [
     {
@@ -15,21 +15,28 @@
       "name": "会话",
       "status": "idle",
       "tokens": 0,
-      "last_active": 195
+      "last_active": 163
+    },
+    {
+      "id": "408ab289-908",
+      "name": "会话",
+      "status": "idle",
+      "tokens": 0,
+      "last_active": 60
     },
     {
       "id": "5eedd28a-870",
       "name": "会话",
       "status": "idle",
       "tokens": 0,
-      "last_active": 1
+      "last_active": 4
     },
     {
       "id": "6cf3dee9-bcc",
       "name": "会话",
       "status": "idle",
       "tokens": 0,
-      "last_active": 194
+      "last_active": 162
     }
   ],
   "activities": [
@@ -42,8 +49,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 34754,
-      "duration_text": "9小时39分钟",
+      "duration": 36221,
+      "duration_text": "10小时3分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -59,8 +66,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 32954,
-      "duration_text": "9小时9分钟",
+      "duration": 34421,
+      "duration_text": "9小时33分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -76,8 +83,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 31154,
-      "duration_text": "8小时39分钟",
+      "duration": 32621,
+      "duration_text": "9小时3分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -93,8 +100,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 29354,
-      "duration_text": "8小时9分钟",
+      "duration": 30821,
+      "duration_text": "8小时33分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -110,8 +117,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 27554,
-      "duration_text": "7小时39分钟",
+      "duration": 29021,
+      "duration_text": "8小时3分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -127,8 +134,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 26230,
-      "duration_text": "7小时17分钟",
+      "duration": 27697,
+      "duration_text": "7小时41分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -144,8 +151,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 22630,
-      "duration_text": "6小时17分钟",
+      "duration": 24097,
+      "duration_text": "6小时41分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -161,8 +168,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 20830,
-      "duration_text": "5小时47分钟",
+      "duration": 22297,
+      "duration_text": "6小时11分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -178,8 +185,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 19030,
-      "duration_text": "5小时17分钟",
+      "duration": 20497,
+      "duration_text": "5小时41分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -195,8 +202,8 @@
       "progress": 10,
       "estimated_remaining": 60,
       "estimated_remaining_text": "1分钟",
-      "duration": 18106,
-      "duration_text": "5小时1分钟",
+      "duration": 19573,
+      "duration_text": "5小时26分钟",
       "messages_count": 2,
       "tokens_in": 0,
       "tokens_out": 0,
@@ -204,5 +211,5 @@
       "session_id": "6cf3dee9"
     }
   ],
-  "activities_count": 42
+  "activities_count": 55
 }
