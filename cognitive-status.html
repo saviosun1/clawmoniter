@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
             background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
             min-height: 100vh;
             padding: 20px;
@@ -26,12 +26,11 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.1);
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 0.9rem;
             color: #00d4ff;
-            border: 1px solid rgba(0, 212, 255, 0.3);
         }
         .update-time .live-dot {
             width: 8px;
@@ -40,10 +39,7 @@
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
         .status-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -51,18 +47,15 @@
             margin-bottom: 30px;
         }
         .status-card {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255,255,255,0.05);
             border-radius: 16px;
             padding: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         .status-card h3 {
             font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255,255,255,0.6);
             margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
         .status-value { font-size: 2.5rem; font-weight: bold; }
         .status-value.high { color: #ff6b6b; }
@@ -71,7 +64,7 @@
         .load-bar {
             width: 100%;
             height: 8px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255,255,255,0.1);
             border-radius: 4px;
             margin-top: 12px;
             overflow: hidden;
@@ -84,93 +77,20 @@
         .load-bar-fill.high { background: linear-gradient(90deg, #ff6b6b, #ee5a24); }
         .load-bar-fill.medium { background: linear-gradient(90deg, #ffd93d, #f39c12); }
         .load-bar-fill.low { background: linear-gradient(90deg, #6bcf7f, #27ae60); }
-        .activities-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        .activities-section h2 {
-            font-size: 1.3rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .activity-count {
-            background: rgba(0, 212, 255, 0.2);
-            color: #00d4ff;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-        }
-        .activity-list { display: flex; flex-direction: column; gap: 12px; }
-        .activity-item {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 16px;
-            align-items: center;
-        }
-        .activity-info h4 { font-size: 1rem; margin-bottom: 6px; }
-        .activity-meta {
-            display: flex;
-            gap: 16px;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.5);
-        }
-        .activity-meta span { display: flex; align-items: center; gap: 4px; }
-        .activity-progress { text-align: right; }
-        .progress-value { font-size: 1.5rem; font-weight: bold; color: #00d4ff; }
-        .progress-bar {
-            width: 100px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-        .remaining-time { font-size: 0.8rem; color: rgba(255, 255, 255, 0.4); margin-top: 4px; }
-        .empty-state { text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.4); }
-        .refresh-hint { text-align: center; margin-top: 30px; color: rgba(255, 255, 255, 0.4); font-size: 0.85rem; }
-        .type-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            margin-left: 8px;
-            background: rgba(0, 212, 255, 0.2);
-            color: #00d4ff;
-        }
         .error-message {
-            background: rgba(255, 107, 107, 0.2);
-            border: 1px solid rgba(255, 107, 107, 0.3);
+            background: rgba(255,107,107,0.2);
+            border: 1px solid rgba(255,107,107,0.3);
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 20px;
             color: #ff6b6b;
             text-align: center;
         }
-        .data-source {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(0, 255, 136, 0.1);
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            color: #00ff88;
-            margin-left: 10px;
+        .refresh-hint {
+            text-align: center;
+            margin-top: 30px;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -181,7 +101,6 @@
             <div class="update-time">
                 <span class="live-dot"></span>
                 <span>数据更新于: <strong id="update-time">--</strong></span>
-                <span class="data-source">⚡ 实时直连 Redis</span>
             </div>
         </header>
 
@@ -191,45 +110,21 @@
             <div class="status-card">
                 <h3>系统负载评分</h3>
                 <div class="status-value" id="score">--</div>
-                <div class="load-bar">
-                    <div class="load-bar-fill" id="score-bar" style="width: 0%"></div>
-                </div>
+                <div class="load-bar"><div class="load-bar-fill" id="score-bar" style="width:0%"></div></div>
             </div>
             <div class="status-card">
                 <h3>活跃会话</h3>
                 <div class="status-value low" id="sessions">--</div>
             </div>
             <div class="status-card">
-                <h3>待处理任务</h3>
-                <div class="status-value low" id="pending">--</div>
-            </div>
-            <div class="status-card">
-                <h3>处理中任务</h3>
-                <div class="status-value low" id="processing">--</div>
-            </div>
-            <div class="status-card">
                 <h3>CPU 使用率</h3>
                 <div class="status-value" id="cpu">--</div>
-                <div class="load-bar">
-                    <div class="load-bar-fill" id="cpu-bar" style="width: 0%"></div>
-                </div>
+                <div class="load-bar"><div class="load-bar-fill" id="cpu-bar" style="width:0%"></div></div>
             </div>
             <div class="status-card">
                 <h3>内存使用率</h3>
                 <div class="status-value" id="memory">--</div>
-                <div class="load-bar">
-                    <div class="load-bar-fill" id="memory-bar" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="activities-section">
-            <h2>
-                📋 正在运行的活动
-                <span class="activity-count" id="activity-count">0</span>
-            </h2>
-            <div class="activity-list" id="activity-list">
-                <div class="empty-state">加载中...</div>
+                <div class="load-bar"><div class="load-bar-fill" id="memory-bar" style="width:0%"></div></div>
             </div>
         </div>
 
@@ -239,117 +134,54 @@
     </div>
 
     <script>
-        // 数据源：只从 data.json 读取（GitHub Actions 每2分钟同步 Redis 数据）
-
-        function formatTime(timestamp) {
-            const date = new Date(timestamp * 1000);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        function formatTime(ts) {
+            const d = new Date(ts * 1000);
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
         }
-
         function formatNow() {
-            const date = new Date();
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${hours}:${minutes}:${seconds}`;
+            const d = new Date();
+            return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+        }
+        function getLoadClass(v) {
+            return v >= 70 ? 'high' : v >= 40 ? 'medium' : 'low';
         }
 
-        function getLoadClass(value) {
-            if (value >= 70) return 'high';
-            if (value >= 40) return 'medium';
-            return 'low';
-        }
-
-        function showError(msg) {
-            const container = document.getElementById('error-container');
-            container.innerHTML = `<div class="error-message">⚠️ ${msg}</div>`;
-        }
-
-        function clearError() {
-            document.getElementById('error-container').innerHTML = '';
-        }
-
-        // 从 data.json 读取（由 GitHub Actions 每2分钟自动同步）
         async function loadData() {
             try {
-                const response = await fetch(`./data.json?t=${Date.now()}`);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const data = await response.json();
-                clearError();
-
-            // 更新更新时间
-            const updateTimeStr = formatTime(data.timestamp);
-            document.getElementById('update-time').textContent = updateTimeStr;
-            document.getElementById('check-time').textContent = formatNow();
-
-            // 更新状态卡片
-            const score = data.score || 0;
-            const scoreEl = document.getElementById('score');
-            scoreEl.textContent = score + '%';
-            scoreEl.className = 'status-value ' + getLoadClass(score);
-            document.getElementById('score-bar').style.width = score + '%';
-            document.getElementById('score-bar').className = 'load-bar-fill ' + getLoadClass(score);
-
-            document.getElementById('sessions').textContent = data.active_sessions || 0;
-            document.getElementById('pending').textContent = data.pending || 0;
-            document.getElementById('processing').textContent = data.processing || 0;
-
-            const cpu = data.cpu || 0;
-            const cpuEl = document.getElementById('cpu');
-            cpuEl.textContent = cpu.toFixed(1) + '%';
-            cpuEl.className = 'status-value ' + getLoadClass(cpu);
-            document.getElementById('cpu-bar').style.width = Math.min(cpu, 100) + '%';
-            document.getElementById('cpu-bar').className = 'load-bar-fill ' + getLoadClass(cpu);
-
-            const memory = data.memory || 0;
-            const memEl = document.getElementById('memory');
-            memEl.textContent = memory.toFixed(1) + '%';
-            memEl.className = 'status-value ' + getLoadClass(memory);
-            document.getElementById('memory-bar').style.width = Math.min(memory, 100) + '%';
-            document.getElementById('memory-bar').className = 'load-bar-fill ' + getLoadClass(memory);
-
-            // 更新活动列表
-            const activities = data.activities || [];
-            document.getElementById('activity-count').textContent = activities.length;
-            
-            const activityList = document.getElementById('activity-list');
-            if (activities.length === 0) {
-                activityList.innerHTML = '<div class="empty-state">暂无活动数据</div>';
-            } else {
-                activityList.innerHTML = activities.slice(0, 10).map(act => `
-                    <div class="activity-item">
-                        <div class="activity-info">
-                            <h4>${act.name}<span class="type-badge">${act.type || '未知'}</span></h4>
-                            <div class="activity-meta">
-                                <span>⏱️ ${act.duration_text || '--'}</span>
-                                <span>💬 ${act.messages_count || 0} 消息</span>
-                                ${act.subtasks_completed ? `<span>✓ ${act.subtasks_completed} 子任务</span>` : ''}
-                            </div>
-                        </div>
-                        <div class="activity-progress">
-                            <div class="progress-value">${act.progress || 0}%</div>
-                            <div class="progress-bar">
-                                <div class="progress-bar-fill" style="width: ${act.progress || 0}%"></div>
-                            </div>
-                            <div class="remaining-time">剩余 ${act.estimated_remaining_text || '--'}</div>
-                        </div>
-                    </div>
-                `).join('');
+                const res = await fetch('./data.json?t=' + Date.now());
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                
+                document.getElementById('update-time').textContent = formatTime(data.timestamp);
+                document.getElementById('check-time').textContent = formatNow();
+                
+                const score = data.score || 0;
+                document.getElementById('score').textContent = score + '%';
+                document.getElementById('score').className = 'status-value ' + getLoadClass(score);
+                document.getElementById('score-bar').style.width = score + '%';
+                document.getElementById('score-bar').className = 'load-bar-fill ' + getLoadClass(score);
+                
+                document.getElementById('sessions').textContent = data.active_sessions || 0;
+                
+                const cpu = data.cpu || 0;
+                document.getElementById('cpu').textContent = cpu.toFixed(1) + '%';
+                document.getElementById('cpu').className = 'status-value ' + getLoadClass(cpu);
+                document.getElementById('cpu-bar').style.width = Math.min(cpu, 100) + '%';
+                document.getElementById('cpu-bar').className = 'load-bar-fill ' + getLoadClass(cpu);
+                
+                const mem = data.memory || 0;
+                document.getElementById('memory').textContent = mem.toFixed(1) + '%';
+                document.getElementById('memory').className = 'status-value ' + getLoadClass(mem);
+                document.getElementById('memory-bar').style.width = Math.min(mem, 100) + '%';
+                document.getElementById('memory-bar').className = 'load-bar-fill ' + getLoadClass(mem);
+                
+                document.getElementById('error-container').innerHTML = '';
+            } catch (e) {
+                document.getElementById('error-container').innerHTML = '<div class="error-message">⚠️ 无法读取数据: ' + e.message + '</div>';
             }
         }
 
-        // 初始加载
         loadData();
-
-        // 每 5 秒刷新
         setInterval(loadData, 5000);
     </script>
 </body>
