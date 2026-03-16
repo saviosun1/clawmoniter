@@ -1,5 +1,5 @@
 {
-  "timestamp": 1773648558.7619903,
+  "timestamp": 1773649752.6787848,
   "score": 20,
   "active_sessions": 1,
   "pending": 0,
@@ -7,10 +7,10 @@
   "max_wait": 0,
   "est_response": 0,
   "cpu": 1.5,
-  "memory": 49.0,
+  "memory": 49.5,
   "agent_status": "active",
   "tasks": [],
   "activities": [],
-  "_updated_at": "2026-03-16T16:09:18.761994",
-  "_fetched_at": "2026-03-16T08:09:27.654371"
+  "_updated_at": "2026-03-16T16:29:12.678789",
+  "_fetched_at": "2026-03-16T08:30:46.347503"
 }
