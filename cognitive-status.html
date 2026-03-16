@@ -239,10 +239,7 @@
     </div>
 
     <script>
-        // Upstash REST API 配置
-        // 注意：这是只读 token，安全可暴露
-        const UPSTASH_URL = 'https://informed-donkey-72337.upstash.io';
-        const UPSTASH_TOKEN = 'AZOJAAIncDI5NTg1ZjcyOTE3YWQ0OGQwYjkwZjY5YWU4N2MzMGNhNnAyNzIzMzc0YzQyN2ZkMmU0ZmYyNGY2MmU0Y2MxYjY3NmE1ZTczNDU2NDlmYTRkODMxMTE1OGU4ZjU0OTFiNTlhMjQxNzdlMmJkNGE4ZGU4ZjQ5NjBhMjAzMjY4NzEyZTEyODc2ZTRmYTUzMWEzYzk3YTBlMjBhZDU2MzhhM2Y3ZDg5OTU2N2IwMjFjMWRhMDU3ZmEzNzI=';
+        // 数据源：只从 data.json 读取（GitHub Actions 每2分钟同步 Redis 数据）
 
         function formatTime(timestamp) {
             const date = new Date(timestamp * 1000);
@@ -278,54 +275,15 @@
             document.getElementById('error-container').innerHTML = '';
         }
 
-        // 使用 Upstash REST API 获取 Redis 数据
-        async function loadDataFromRedis() {
+        // 从 data.json 读取（由 GitHub Actions 每2分钟自动同步）
+        async function loadData() {
             try {
-                const response = await fetch(`${UPSTASH_URL}/get/cognitive_load`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${UPSTASH_TOKEN}`
-                    }
-                });
-
+                const response = await fetch(`./data.json?t=${Date.now()}`);
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
-
-                const result = await response.json();
-                
-                if (!result.result) {
-                    throw new Error('Redis 中没有数据');
-                }
-
-                // Upstash 返回的是 JSON 字符串，需要解析
-                const data = JSON.parse(result.result);
+                const data = await response.json();
                 clearError();
-                return data;
-
-            } catch (error) {
-                console.error('Redis 读取失败:', error);
-                showError(`无法连接到 Redis: ${error.message}，尝试从 data.json 备份读取`);
-                // 降级到 data.json
-                return await loadDataFromFile();
-            }
-        }
-
-        // 降级方案：从 data.json 读取
-        async function loadDataFromFile() {
-            try {
-                const response = await fetch(`./data.json?t=${Date.now()}`);
-                return await response.json();
-            } catch (error) {
-                console.error('文件读取失败:', error);
-                showError('无法读取数据，请检查网络连接');
-                return null;
-            }
-        }
-
-        async function loadData() {
-            const data = await loadDataFromRedis();
-            if (!data) return;
 
             // 更新更新时间
             const updateTimeStr = formatTime(data.timestamp);
@@ -391,7 +349,7 @@
         // 初始加载
         loadData();
 
-        // 每 5 秒刷新（直连 Redis 可以更快）
+        // 每 5 秒刷新
         setInterval(loadData, 5000);
     </script>
 </body>
